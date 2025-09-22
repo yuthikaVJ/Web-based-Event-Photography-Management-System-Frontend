@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Payment</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #f0f2f5; margin:0; padding:0; }
+  .container { max-width:700px; margin:40px auto; background:#fff; padding:30px; border-radius:15px; box-shadow:0 8px 20px rgba(0,0,0,0.15);}
+  h2{text-align:center; margin-bottom:30px; color:#333;}
+  h3{color:#555; margin-bottom:15px; border-bottom:1px solid #ddd; padding-bottom:5px;}
+  label{display:block; margin-bottom:5px; font-weight:bold; color:#444;}
+  input, select{width:100%; padding:12px; margin-bottom:20px; border-radius:8px; border:1px solid #ccc; font-size:14px;}
+  button{width:100%; padding:14px; background:#667eea; color:white; border:none; border-radius:10px; font-size:16px; cursor:pointer;}
+  button:hover{background:#5a67d8;}
+  .section{margin-bottom:25px;}
+  .event-summary{background:#f9f9f9; padding:15px; border-radius:10px; margin-bottom:20px; border:1px solid #ddd;}
+  .event-summary p{margin:6px 0; font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="container">
+  <h2>Event Payment</h2>
+
+  <div class="event-summary" id="eventSummary"></div>
+
+  <form id="paymentForm">
+    <div class="section">
+      <h3>User Information</h3>
+      <label for="name">Full Name</label>
+      <input type="text" id="name" required minlength="3" placeholder="John Doe">
+
+      <label for="email">Email</label>
+      <input type="email" id="email" required placeholder="example@email.com">
+    </div>
+
+    <div class="section">
+      <h3>Payment Information</h3>
+      <label for="method">Payment Method</label>
+      <select id="method" required>
+        <option value="">--Select--</option>
+        <option value="credit-card">Credit Card</option>
+        <option value="debit-card">Debit Card</option>
+        <option value="paypal">PayPal</option>
+      </select>
+
+      <div id="cardFields">
+        <label for="cardNumber">Card Number</label>
+        <input type="text" id="cardNumber" placeholder="1234 5678 9012 3456">
+
+        <label for="expiryDate">Expiry Date</label>
+        <input type="month" id="expiryDate">
+
+        <label for="cvv">CVV</label>
+        <input type="text" id="cvv" placeholder="123">
+      </div>
+    </div>
+
+    <div class="section">
+      <h3>Event Summary</h3>
+      <label for="packageSelect">Select Package</label>
+      <select id="packageSelect" required>
+        <option value="">--Select Package--</option>
+      </select>
+
+      <label for="type">Package Name</label>
+      <input type="text" id="type" readonly>
+
+      <label for="price">Price</label>
+      <input type="text" id="price" readonly>
+    </div>
+
+    <button type="submit">Pay Now</button>
+  </form>
+</div>
+
+<script>
+const PAYMENT_API = "http://localhost:9000/api/payments";
+const PACKAGE_API = "http://localhost:9000/api/packages";
+const lastEvent = JSON.parse(localStorage.getItem("lastEvent")) || {};
+let paymentHistory = [];
+
+// Fill Event Summary
+document.getElementById("eventSummary").innerHTML = lastEvent.eventType ? `
+  <p><strong>Event:</strong> ${lastEvent.eventType}</p>
+  <p><strong>Date:</strong> ${lastEvent.date}</p>
+  <p><strong>Time:</strong> ${lastEvent.time}</p>
+  <p><strong>Photographer:</strong> ${lastEvent.photographer}</p>
+` : "<p>No event selected!</p>";
+
+// Prefill user info
+document.getElementById("name").value = lastEvent.name || '';
+document.getElementById("email").value = lastEvent.email || '';
+
+// Load packages
+async function loadPackages() {
+  try {
+    const res = await fetch(PACKAGE_API);
+    const packages = await res.json();
+    const select = document.getElementById("packageSelect");
+    packages.forEach(pack => {
+      const option = document.createElement("option");
+      option.value = pack.packageId;
+      option.text = pack.name;
+      option.dataset.price = pack.price;
+      select.appendChild(option);
+    });
+
+    if(lastEvent.packageId){
+      select.value = lastEvent.packageId;
+      updatePackageDetails(select.value);
+    }
+  } catch(err){
+    console.error("Error loading packages:", err);
+  }
+}
+
+function updatePackageDetails(packageId){
+  const select = document.getElementById("packageSelect");
+  const selectedOption = select.querySelector(`option[value='${packageId}']`);
+  if(selectedOption){
+    document.getElementById("type").value = selectedOption.text;
+    document.getElementById("price").value = selectedOption.dataset.price;
+  }
+}
+
+document.getElementById("packageSelect").addEventListener("change", function(){
+  updatePackageDetails(this.value);
+});
+
+// Show/Hide card fields
+const methodSelect = document.getElementById("method");
+const cardFields = document.getElementById("cardFields");
+methodSelect.addEventListener("change", function(){
+  cardFields.style.display = (this.value === "paypal") ? "none" : "block";
+});
+
+// Form submission with validation + auto PDF
+document.getElementById("paymentForm").addEventListener("submit", async function(e){
+  e.preventDefault();
+
+  const name = document.getElementById("name").value.trim();
+  const email = document.getElementById("email").value.trim();
+  if(name.length < 3){
+    alert("Full Name must be at least 3 characters.");
+    return;
+  }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    alert("Enter a valid email address.");
+    return;
+  }
+
+  const method = methodSelect.value;
+  let cardNumber = document.getElementById("cardNumber").value;
+  let expiryDate = document.getElementById("expiryDate").value;
+  let cvv = document.getElementById("cvv").value;
+
+  if(method !== "paypal"){
+    if(!/^\d{13,19}$/.test(cardNumber.replace(/\s+/g,''))){
+      alert("Invalid card number!");
+      return;
+    }
+    if(!/^\d{3,4}$/.test(cvv)){
+      alert("Invalid CVV!");
+      return;
+    }
+    const [year, month] = expiryDate.split("-");
+    const expDate = new Date(year, month - 1);
+    if(expDate < new Date()){
+      alert("Card expiry date cannot be in the past!");
+      return;
+    }
+    expiryDate += "-01";
+  } else {
+    cardNumber = "";
+    expiryDate = null;
+    cvv = 0;
+  }
+
+  const paymentData = {
+    name, email,
+    cardNumber, expiryDate, cvv: parseInt(cvv),
+    method,
+    type: document.getElementById("type").value,
+    price: parseFloat(document.getElementById("price").value)
+  };
+
+  try {
+    const response = await fetch(PAYMENT_API, {
+      method: "POST",
+      headers: {"Content-Type":"application/json"},
+      body: JSON.stringify(paymentData)
+    });
+
+    if(response.ok){
+      const result = await response.json();
+
+      // ✅ Now use payemntid
+      alert("Payment successful! Payment ID: " + result.payemntid);
+      localStorage.removeItem("lastEvent");
+
+      paymentHistory.push({paymentId: result.payemntid, ...paymentData}); 
+
+      // ✅ Auto-generate Stylish Payment Slip PDF
+const { jsPDF } = window.jspdf;
+const doc = new jsPDF();
+
+// Header
+doc.setFillColor(102, 126, 234); // blue gradient tone
+doc.rect(0, 0, 210, 30, "F"); // header background
+doc.setTextColor(255, 255, 255);
+doc.setFontSize(18);
+doc.text(" Event Photography", 14, 20);
+
+doc.setFontSize(12);
+doc.text("Payment Receipt", 170, 20, { align: "right" });
+
+// Payment Date
+doc.setTextColor(0, 0, 0);
+doc.setFontSize(11);
+doc.text(`Date: ${new Date().toLocaleString()}`, 14, 40);
+
+// Divider
+doc.setDrawColor(180);
+doc.line(14, 45, 196, 45);
+
+// Customer Details
+doc.setFontSize(14);
+doc.setTextColor(40, 40, 40);
+doc.text(" Customer Details", 14, 55);
+
+doc.setFontSize(12);
+doc.setTextColor(80, 80, 80);
+doc.text(`Name: ${paymentData.name}`, 20, 65);
+doc.text(`Email: ${paymentData.email}`, 20, 75);
+
+// Payment Details
+doc.setFontSize(14);
+doc.setTextColor(40, 40, 40);
+doc.text(" Payment Details", 14, 95);
+
+doc.setFontSize(12);
+doc.setTextColor(80, 80, 80);
+doc.text(`Payment ID: ${result.payemntid}`, 20, 105);
+doc.text(`Method: ${paymentData.method}`, 20, 115);
+doc.text(`Package: ${paymentData.type}`, 20, 125);
+
+// Highlight Price in a box
+doc.setFillColor(230, 240, 255);
+doc.roundedRect(20, 135, 170, 15, 3, 3, "F");
+doc.setFontSize(14);
+doc.setTextColor(0, 0, 0);
+doc.text(` Amount Paid: $${paymentData.price.toFixed(2)}`, 25, 145);
+
+// Divider
+doc.setDrawColor(200);
+doc.line(14, 160, 196, 160);
+
+// Footer Thank You
+doc.setFontSize(12);
+doc.setTextColor(100, 100, 100);
+doc.text(" Thank you for choosing our service!", 105, 175, { align: "center" });
+doc.text("We look forward to capturing your memories ", 105, 185, { align: "center" });
+
+// Save as PDF
+doc.save(`Payment_Slip_${result.payemntid}.pdf`);
+
+      
+
+      // Redirect after slip download
+      window.location.href="customer-dashboard.html";
+    } else {
+      alert("Payment failed! Status: " + response.status);
+    }
+  } catch(err){
+    console.error(err);
+    alert("Server error");
+  }
+});
+
+// Init
+loadPackages();
+</script>
+</body>
+</html>

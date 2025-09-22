@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Customer Portal</title>
+  <style>
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      margin: 0;
+    }
+    .dashboard { display: flex; min-height: 100vh; }
+    .sidebar {
+      width: 250px;
+      background: #fff;
+      padding: 20px;
+      box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+    }
+    .sidebar ul { list-style: none; padding: 0; }
+    .sidebar li { margin-bottom: 10px; }
+    .sidebar a {
+      text-decoration: none;
+      color: #2d3436;
+      display: block;
+      padding: 10px;
+      border-radius: 5px;
+      transition: background 0.3s;
+    }
+    .sidebar a:hover, .sidebar a.active { background: rgba(102, 126, 234, 0.1); }
+    .main-content {
+      flex: 1;
+      padding: 30px;
+      background: rgba(255,255,255,0.95);
+      overflow-y: auto;
+    }
+    h1 { color: #2d3436; margin-bottom: 20px; }
+    .btn {
+      padding: 8px 15px;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    .btn-primary { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    .btn-success { background: #00b894; color: white; }
+    .btn-danger { background: #d63031; color: white; }
+    .btn-logout {
+      background: #e17055;
+      color: white;
+      padding: 10px;
+      border-radius: 5px;
+      text-align: center;
+      display: block;
+      text-decoration: none;
+      margin-top: 20px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+    th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+    th { background: linear-gradient(135deg, #667eea, #764ba2); color: white; }
+    tr:hover { background: #f8f9fa; }
+    .content-section { display: none; }
+    .content-section.active { display: block; }
+    form {
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+      margin-top: 20px;
+    }
+    form input, form select, form textarea {
+      width: 100%;
+      padding: 10px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+<body>
+<div class="dashboard">
+  <div class="sidebar">
+    <div>
+      <h2 id="welcomeText">Customer Portal</h2>
+      <ul>
+        <li><a href="#" class="nav-link active" data-target="eventSection">📣 Events</a></li>
+        <li><a href="#" class="nav-link" data-target="ticketsSection">🎫 Tickets</a></li>
+          <li><a href="#" class="nav-link" data-target="gallerySection">🖼️ Gallery</a></li>
+        <li><a href="#" class="nav-link" data-target="profileSection">👤 Profile</a></li>
+      </ul>
+    </div>
+    <a href="login.html" class="btn-logout" onclick="logout()">Logout</a>
+  </div>
+
+  <div class="main-content">
+    <!-- Events -->
+    <div id="eventSection" class="content-section active">
+      <h1>My Events</h1>
+      <button class="btn btn-success" onclick="toggleEventForm()">+ Create Event</button>
+      <form id="eventForm" style="display:none;">
+        <input type="text" id="ename" placeholder="Your Name" readonly>
+        <input type="email" id="eemail" placeholder="Your Email" readonly>
+        <input type="text" id="ephone" placeholder="Phone" required>
+        <input type="text" id="etype" placeholder="Event Type" required>
+        <input type="date" id="edate" required>
+        <input type="time" id="etime" required>
+        <input type="text" id="elocation" placeholder="Location" required>
+        <select id="ephotographer" required>
+          <option value="">Select Photographer</option>
+        </select>
+        <select id="epackageType" required>
+          <option value="">Select Package</option>
+        </select>
+        <button type="submit" class="btn btn-primary">Save Event</button>
+      </form>
+      <table id="eventsTable">
+        <thead>
+        <tr>
+          <th>Booking ID</th><th>Name</th><th>Email</th><th>Phone</th>
+          <th>Event Type</th><th>Date</th><th>Time</th><th>Location</th>
+          <th>Photographer</th><th>Package</th>
+        </tr>
+        </thead>
+        <tbody id="eventsTableBody"></tbody>
+      </table>
+    </div>
+
+    <!-- Tickets -->
+    <div id="ticketsSection" class="content-section">
+      <h1>My Tickets</h1>
+      <button class="btn btn-success" onclick="toggleTicketForm()">+ Create Ticket</button>
+      <form id="ticketForm" style="display:none;">
+        <input type="text" id="tname" placeholder="Your Name" readonly>
+        <input type="email" id="temail" placeholder="Your Email" readonly>
+        <input type="text" id="tphone" placeholder="Phone" required>
+        <input type="text" id="tsubject" placeholder="Subject" required>
+        <textarea id="tmessage" placeholder="Message" required></textarea>
+        <button type="submit" class="btn btn-primary">Save Ticket</button>
+      </form>
+      <table id="ticketsTable">
+        <thead>
+        <tr><th>Ticket ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Subject</th><th>Message</th></tr>
+        </thead>
+        <tbody id="ticketsTableBody"></tbody>
+      </table>
+    </div>
+    <!-- GALLERY SECTION -->
+ <div id="gallerySection" class="content-section">
+  <h1>My Gallery</h1>
+  <table id="galleryTable">
+    <thead>
+      <tr>
+        <th> ID</th>
+        <th>File name</th>
+        <th> Upload Date</th>
+        <th>Download</th>
+      </tr>
+    </thead>
+    <tbody id="galleryTableBody"></tbody>
+  </table>
+ </div>
+
+
+    <!-- Profile -->
+    <div id="profileSection" class="content-section">
+      <h1>My Profile</h1>
+      <form id="profileForm">
+        <input type="text" id="pname" placeholder="Full Name" required>
+        <input type="email" id="pemail" placeholder="Email" readonly>
+        <input type="text" id="pphone" placeholder="Phone" required>
+        <input type="password" id="ppassword" placeholder="New Password (optional)">
+        <button type="submit" class="btn btn-primary">Update Profile</button>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+  const TICKET_API_URL = "http://localhost:9000/api/tickets";
+  const EVENT_API_URL = "http://localhost:9000/api/bookings";
+  const PHOTOGRAPHER_API_URL = "http://localhost:9000/api/photographers";
+  const PACKAGE_API_URL = "http://localhost:9000/api/packages";
+  const GALLERY_API_URL = "http://localhost:9000/zip";
+  const PROFILE_API_URL = "http://localhost:9000/api/customers"; // <-- profile API
+
+  const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
+  if (!loggedInUser) window.location.href = "login.html";
+
+  document.getElementById("welcomeText").textContent = "Welcome, " + (loggedInUser.uname || "Customer");
+  document.getElementById("ename").value = loggedInUser.uname || "";
+  document.getElementById("eemail").value = loggedInUser.uemail || "";
+  document.getElementById("tname").value = loggedInUser.uname || "";
+  document.getElementById("temail").value = loggedInUser.uemail || "";
+
+  // Pre-fill profile form
+  document.getElementById("pname").value = loggedInUser.uname || "";
+  document.getElementById("pemail").value = loggedInUser.uemail || "";
+  document.getElementById("pphone").value = loggedInUser.uphone || "";
+
+  document.addEventListener("DOMContentLoaded", function() {
+    setupNavigation();
+    loadEvents();
+    loadTickets();
+    loadPhotographers();
+    loadPackages();
+    loadGallery();
+
+  });
+
+  function setupNavigation() {
+    const navLinks = document.querySelectorAll('.nav-link');
+    navLinks.forEach(link => {
+      link.addEventListener('click', function(e) {
+        e.preventDefault();
+        navLinks.forEach(l => l.classList.remove('active'));
+        document.querySelectorAll('.content-section').forEach(section => section.classList.remove('active'));
+        this.classList.add('active');
+        document.getElementById(this.getAttribute('data-target')).classList.add('active');
+      });
+    });
+  }
+
+  // ---------------- Events ----------------
+  function toggleEventForm() {
+    const form = document.getElementById("eventForm");
+    form.style.display = form.style.display === "none" ? "block" : "none";
+  }
+
+  async function loadPhotographers() {
+    try {
+      const res = await fetch(PHOTOGRAPHER_API_URL);
+      const photographers = await res.json();
+      const select = document.getElementById("ephotographer");
+      photographers.forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.firstName;
+        option.textContent = p.firstName;
+        select.appendChild(option);
+      });
+    } catch (err) { console.error("Failed to load photographers:", err); }
+  }
+
+  async function loadPackages() {
+    try {
+      const res = await fetch(PACKAGE_API_URL);
+      const packages = await res.json();
+      const select = document.getElementById("epackageType");
+      packages.forEach(p => {
+        const option = document.createElement("option");
+        option.value = p.name;
+        option.textContent = p.name;
+        select.appendChild(option);
+      });
+    } catch (err) { console.error("Failed to load packages:", err); }
+  }
+
+  document.getElementById("eventForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const eventData = {
+      name: loggedInUser.uname,
+      email: loggedInUser.uemail,
+      phone: document.getElementById("ephone").value,
+      eventType: document.getElementById("etype").value,
+      date: document.getElementById("edate").value,
+      time: document.getElementById("etime").value,
+      location: document.getElementById("elocation").value,
+      photographer: document.getElementById("ephotographer").value,
+      packageType: document.getElementById("epackageType").value
+    };
+    try {
+      const res = await fetch(EVENT_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(eventData)
+      });
+      if (res.ok) {
+        alert("Event created successfully!");
+        window.location.href = "payment.html"; // redirect to payment
+      } else {
+        alert("Failed to create event");
+      }
+    } catch (err) { console.error(err); }
+  });
+
+  async function loadEvents() {
+    try {
+      const res = await fetch(EVENT_API_URL);
+      const events = await res.json();
+      const tbody = document.getElementById("eventsTableBody");
+      tbody.innerHTML = "";
+      const myEvents = events.filter(ev => ev.email === loggedInUser.uemail);
+      myEvents.forEach(ev => {
+        tbody.innerHTML += `<tr>
+          <td>${ev.id}</td><td>${ev.name}</td><td>${ev.email}</td>
+          <td>${ev.phone}</td><td>${ev.eventType}</td><td>${ev.date}</td>
+          <td>${ev.time}</td><td>${ev.location}</td><td>${ev.photographer}</td><td>${ev.packageType}</td>
+        </tr>`;
+      });
+    } catch (e) { console.error(e); }
+  }
+
+  // ---------------- Tickets ----------------
+  function toggleTicketForm() {
+    const form = document.getElementById("ticketForm");
+    form.style.display = form.style.display === "none" ? "block" : "none";
+  }
+
+  document.getElementById("ticketForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const ticketData = {
+      tname: loggedInUser.uname,
+      temail: loggedInUser.uemail,
+      tphone: document.getElementById("tphone").value,
+      tsubject: document.getElementById("tsubject").value,
+      tmessage: document.getElementById("tmessage").value
+    };
+    try {
+      const res = await fetch(TICKET_API_URL, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(ticketData)
+      });
+      if (res.ok) {
+        alert("Ticket created successfully!");
+        loadTickets();
+        toggleTicketForm();
+        this.reset();
+      } else { alert("Failed to create ticket"); }
+    } catch (err) { console.error(err); }
+  });
+
+  async function loadTickets() {
+    try {
+      const res = await fetch(TICKET_API_URL);
+      const tickets = await res.json();
+      const tbody = document.getElementById("ticketsTableBody");
+      tbody.innerHTML = "";
+      const myTickets = tickets.filter(t => t.temail === loggedInUser.uemail);
+      myTickets.forEach(ticket => {
+        tbody.innerHTML += `<tr>
+          <td>${ticket.tid}</td><td>${ticket.tname}</td><td>${ticket.temail}</td>
+          <td>${ticket.tphone}</td><td>${ticket.tsubject}</td><td>${ticket.tmessage}</td>
+        </tr>`;
+      });
+    } catch (e) { console.error(e); }
+  }
+  // ---------------- Gallery ----------------
+  async function loadGallery() {
+  try {
+    const res = await fetch(`${GALLERY_API_URL}/customer/${loggedInUser.uemail}`);
+    const zips = await res.json();
+    const tbody = document.getElementById("galleryTableBody");
+    tbody.innerHTML = "";
+
+    zips.forEach(zip => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${zip.eventId || "-"}</td>
+          <td>${zip.fileName}</td>
+          <td>${(zip.uploadDate || "").replace("T", " ")}</td>
+          <td>
+            <a href="${GALLERY_API_URL}/download/${zip.id}" 
+               class="btn btn-primary" download>
+               ⬇ Download
+            </a>
+          </td>
+        </tr>`;
+    });
+  } catch (e) {
+    console.error("Failed to load gallery:", e);
+  }
+}
+
+
+
+  // ---------------- Profile ----------------
+  document.getElementById("profileForm").addEventListener("submit", async function(e) {
+    e.preventDefault();
+    const profileData = {
+      uname: document.getElementById("pname").value,
+      uemail: document.getElementById("pemail").value,
+      uphone: document.getElementById("pphone").value,
+      upassword: document.getElementById("ppassword").value
+    };
+    try {
+      const res = await fetch(`${PROFILE_API_URL}/${loggedInUser.uid}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(profileData)
+      });
+      if (res.ok) {
+        alert("Profile updated successfully!");
+        localStorage.setItem("loggedInUser", JSON.stringify(profileData));
+        document.getElementById("welcomeText").textContent = "Welcome, " + profileData.uname;
+      } else {
+        alert("Failed to update profile");
+      }
+    } catch (err) { console.error(err); }
+  });
+
+  function logout() {
+    localStorage.removeItem("loggedInUser");
+    localStorage.removeItem("userRole");
+    window.location.href = "login.html";
+  }
+</script>
+</body>
+</html>

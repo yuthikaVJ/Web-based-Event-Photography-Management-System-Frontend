@@ -1,0 +1,1398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+
+        .dashboard {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+        }
+
+        .sidebar h2 {
+            margin-bottom: 30px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .sidebar ul {
+            list-style: none;
+        }
+
+        .sidebar li {
+            margin-bottom: 10px;
+        }
+
+        .sidebar a {
+            color: white;
+            text-decoration: none;
+            display: block;
+            padding: 12px 15px;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar a:hover {
+            background-color: rgba(255, 255, 255, 0.1);
+            transform: translateX(5px);
+        }
+
+        .sidebar a.active {
+            background-color: rgba(255, 255, 255, 0.2);
+            font-weight: bold;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 20px;
+            width: calc(100% - 250px);
+        }
+
+        .content-section {
+            display: none;
+        }
+
+        .content-section.active {
+            display: block;
+        }
+
+        .table-responsive {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 30px;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 600px;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .alert {
+            display: none;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+
+        .btn {
+            border-radius: 8px;
+            font-weight: 500;
+        }
+
+        .table th {
+            background-color: #495057;
+            color: white;
+            font-weight: 600;
+            border: none;
+        }
+
+        .table td {
+            vertical-align: middle;
+        }
+
+        .badge {
+            font-size: 0.8em;
+        }
+
+        h1 {
+            color: #495057;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+            }
+
+            .modal-content {
+                margin: 10% auto;
+                width: 95%;
+            }
+        }
+    </style>
+    
+</head>
+<body>
+    <div class="dashboard">
+        <div class="sidebar">
+            <h2>Admin Panel</h2>
+            <ul>
+                <li><a href="#" class="nav-link active" data-target="usersSection">👥 Users</a></li>
+                <li><a href="#" class="nav-link" data-target="photographersSection">📸 Photographers</a></li>
+                <li><a href="#" class="nav-link" data-target="eventSection">📣 Events</a></li>
+                <li><a href="#" class="nav-link" data-target="ticketsSection">🎫 Tickets</a></li>
+                <li><a href="#" class="nav-link" data-target="paymentSection">💳 Payment Records</a></li>
+                <li><a href="#" class="nav-link" data-target="promotionSection">📫 Promotion & Packages</a></li>
+                <li><a href="#" class="nav-link" data-target="calenderSection">📆 Calendar</a></li>
+            </ul>
+            <button class="btn btn-danger" style="margin-top: 20px; width: 100%;" onclick="logout()">🚪 Logout</button>
+        </div>
+
+        <div class="main-content">
+            <!-- Alert Messages -->
+            <div id="alertSuccess" class="alert alert-success"></div>
+            <div id="alertError" class="alert alert-danger"></div>
+
+            <!-- Users Section -->
+            <div id="usersSection" class="content-section active">
+                <h1>User Management</h1>
+                <button class="btn btn-primary mb-3" onclick="openUserModal()">+ Add User</button>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="usersTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>User ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Password</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="usersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Photographers Section -->
+            <div id="photographersSection" class="content-section">
+                <h1>Photographer Management</h1>
+                <button class="btn btn-primary mb-3" onclick="openPhotographerModal()">+ Add Photographer</button>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="photographersTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Photographer ID</th>
+                                <th>First Name</th>
+                                <th>Last Name</th>
+                                <th>NIC</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Job Title</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="photographersTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Events Section -->
+            <div id="eventSection" class="content-section">
+                <h1>Event Management</h1>
+                <button class="btn btn-primary mb-3" onclick="openEventModal()">+ Add Event</button>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="eventsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Booking ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Event Type</th>
+                                <th>Date</th>
+                                <th>Time</th>
+                                <th>Location</th>
+                                <th>Photographer</th>
+                                <th>Package Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="eventsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Tickets Section -->
+            <div id="ticketsSection" class="content-section">
+                <h1>Ticket Management</h1>
+                <button class="btn btn-primary mb-3" onclick="openTicketModal()">+ New Ticket</button>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="ticketsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Ticket ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Phone</th>
+                                <th>Subject</th>
+                                <th>Message</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ticketsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Payment Records Section -->
+            <div id="paymentSection" class="content-section">
+                <h1>Payment Records Management</h1>
+                <button class="btn btn-primary mb-3" onclick="openPaymentModal()">+ Add Payment Record</button>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="paymentsTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Payment ID</th>
+                                <th>Customer Name</th>
+                                <th>Email</th>
+                                <th>Card Number</th>
+                                <th>Expiry Date</th>
+                                <th>Payment Method</th>
+                                <th>Price</th>
+                                <th>Type</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="paymentsTableBody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Promotion & Packages Section -->
+            <div id="promotionSection" class="content-section">
+                <h1>Promotion & Packages</h1>
+                <button class="btn btn-primary mb-3" onclick="openPackageModal()">+ Add Packages</button>
+                <div class="table-responsive">
+                    <table class="table table-striped" id="packageTable">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Package ID</th>
+                                <th>Package Name</th>
+                                <th>Price</th>
+                                <th>Hours</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                                <th>Action</th>
+    
+                            </tr>
+                        </thead>
+                        <tbody id="packageTableBody"></tbody>
+                    </table>
+            </div>
+
+            <!-- Calendar Section -->
+            <div id="calenderSection" class="content-section">
+                <h1>Calendar</h1>
+                <iframe src="https://calendar.google.com/calendar/embed?src=yuthikavj%40gmail.com&ctz=Asia%2FColombo" style="border: 0" width="800" height="600" frameborder="0" scrolling="no"></iframe>
+ 
+            </div>
+        </div>
+    </div>
+
+    <!-- ------------------- Modals ------------------- -->
+
+    <!-- User Modal -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <h2 id="modalTitle">Add User</h2>
+            <form id="userForm">
+                <input type="hidden" id="uid">
+                <div class="mb-3">
+                    <label for="uname" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="uname" required>
+                </div>
+                <div class="mb-3">
+                    <label for="uemail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="uemail" required>
+                </div>
+                <div class="mb-3">
+                    <label for="uphone" class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="uphone" required>
+                </div>
+                <div class="mb-3">
+                    <label for="upassword" class="form-label">Password</label>
+                    <input type="password" class="form-control" id="upassword" required>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closeUserModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Photographer Modal -->
+    <div id="photographerModal" class="modal">
+        <div class="modal-content">
+            <h2 id="photographerModalTitle">Add Photographer</h2>
+            <form id="photographerForm">
+                <input type="hidden" id="pid">
+                <div class="mb-3">
+                    <label for="pfirstName" class="form-label">First Name</label>
+                    <input type="text" class="form-control" id="pfirstName" required pattern="[A-Za-z\s]+">
+                </div>
+                <div class="mb-3">
+                    <label for="plastName" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="plastName" required pattern="[A-Za-z\s]+">
+                </div>
+                <div class="mb-3">
+                    <label for="pnic" class="form-label">NIC</label>
+                    <input type="text" class="form-control" id="pnic" required>
+                </div>
+                <div class="mb-3">
+                    <label for="pemail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="pemail" required>
+                </div>
+                <div class="mb-3">
+                    <label for="pphone" class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="pphone" required pattern="\d{10,15}">
+                </div>
+                <div class="mb-3">
+                    <label for="pjobTitle" class="form-label">Job Title</label>
+                    <input type="text" class="form-control" id="pjobTitle" required>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closePhotographerModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Event Modal -->
+    <div id="eventModal" class="modal">
+        <div class="modal-content">
+            <h2 id="eventModalTitle">Add Event</h2>
+            <form id="eventForm">
+                <input type="hidden" id="eventId">
+                <div class="mb-3">
+                    <label for="eventName" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="eventName" required>
+                </div>
+                <div class="mb-3">
+                    <label for="eventEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="eventEmail" required>
+                </div>
+                <div class="mb-3">
+                    <label for="eventPhone" class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="eventPhone" required>
+                </div>
+                <div class="mb-3">
+                    <label for="eventType" class="form-label">Event Type</label>
+                    <input type="text" class="form-control" id="eventType" required>
+                </div>
+                <div class="mb-3">
+                    <label for="eventDate" class="form-label">Date</label>
+                    <input type="date" class="form-control" id="eventDate" required>
+                </div>
+                <div class="mb-3">
+                    <label for="eventTime" class="form-label">Time</label>
+                    <input type="time" class="form-control" id="eventTime" required>
+                </div>
+                <div class="mb-3">
+                    <label for="eventLocation" class="form-label">Location</label>
+                    <input type="text" class="form-control" id="eventLocation" required>
+                </div>
+                <div class="mb-3">
+                    <label for="eventPhotographer" class="form-label">Photographer</label>
+                    <input type="text" class="form-control" id="eventPhotographer" required>
+                </div>
+                <div class="mb-3">
+                    <label for="eventPackage" class="form-label">Package Type</label>
+                    <input type="text" class="form-control" id="eventPackage" required>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closeEventModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Ticket Modal -->
+    <div id="ticketModal" class="modal">
+        <div class="modal-content">
+            <h2 id="ticketModalTitle">Add Ticket</h2>
+            <form id="ticketForm">
+                <input type="hidden" id="ticketId">
+                <div class="mb-3">
+                    <label for="ticketName" class="form-label">Name</label>
+                    <input type="text" class="form-control" id="ticketName" required>
+                </div>
+                <div class="mb-3">
+                    <label for="ticketEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="ticketEmail" required>
+                </div>
+                <div class="mb-3">
+                    <label for="ticketPhone" class="form-label">Phone</label>
+                    <input type="text" class="form-control" id="ticketPhone" required>
+                </div>
+                <div class="mb-3">
+                    <label for="ticketSubject" class="form-label">Subject</label>
+                    <input type="text" class="form-control" id="ticketSubject" required>
+                </div>
+                <div class="mb-3">
+                    <label for="ticketMessage" class="form-label">Message</label>
+                    <textarea class="form-control" id="ticketMessage" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closeTicketModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Payment Modal -->
+    <div id="paymentModal" class="modal">
+        <div class="modal-content">
+            <h2 id="paymentModalTitle">Add Payment Record</h2>
+            <form id="paymentForm">
+                <input type="hidden" id="paymentId">
+                <div class="mb-3">
+                    <label for="paymentName" class="form-label">Customer Name</label>
+                    <input type="text" class="form-control" id="paymentName" required>
+                </div>
+                <div class="mb-3">
+                    <label for="paymentEmail" class="form-label">Email</label>
+                    <input type="email" class="form-control" id="paymentEmail" required>
+                </div>
+                <div class="mb-3">
+                    <label for="paymentCardNumber" class="form-label">Card Number</label>
+                    <input type="text" class="form-control" id="paymentCardNumber" required pattern="\d{16}" placeholder="1234567890123456" maxlength="16">
+                </div>
+                <div class="mb-3">
+                    <label for="paymentExpiryDate" class="form-label">Expiry Date</label>
+                    <input type="date" class="form-control" id="paymentExpiryDate" required>
+                </div>
+                <div class="mb-3">
+                    <label for="paymentCvv" class="form-label">CVV</label>
+                    <input type="number" class="form-control" id="paymentCvv" required min="100" max="9999" placeholder="123">
+                </div>
+                <div class="mb-3">
+                    <label for="paymentMethod" class="form-label">Payment Method</label>
+                    <select class="form-select" id="paymentMethod" required>
+                        <option value="">Select Method</option>
+                        <option value="Credit Card">Credit Card</option>
+                        <option value="Debit Card">Debit Card</option>
+                        <option value="PayPal">PayPal</option>
+                        <option value="Bank Transfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label for="paymentPrice" class="form-label">Price</label>
+                    <input type="text" class="form-control" id="paymentPrice" placeholder="Enter price" required>
+                </div>
+                <div class="mb-3">
+                    <label for="paymentType" class="form-label">Payment Type</label>
+                    <select class="form-select" id="paymentType" required>
+                        <option value="">Select Type</option>
+                        <option value="Full Payment">Full Payment</option>
+                        <option value="Advance Payment">Advance Payment</option>
+                        <option value="Remaining Payment">Remaining Payment</option>
+                        <option value="Refund">Refund</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closePaymentModal()">Cancel</button>
+            </form>
+        </div>
+    </div>
+
+     <!-- Package Modal -->
+     <div id="packageModal" class="modal">
+        <div class="modal-content">
+            <h2 id="packageModalTitle">Add Package</h2>
+            <form id="packageForm">
+                <input type="hidden" id="packageId">
+                <div class="mb-3">
+                    <label for="packageName" class="form-label">Package Name</label>
+                    <input type="text" class="form-control" id="packageName" required>
+                </div>
+                  <div class="mb-3">
+                    <label for="packageHours" class="form-label">Price</label>
+                    <input type="number" class="form-control" id="packagePrice" required min="1">
+                </div>
+                <div class="mb-3">
+                    <label for="packageHours" class="form-label">Hours</label>
+                    <input type="number" class="form-control" id="packageHours" required min="1">
+                </div>
+                <div class="mb-3">
+                    <label for="packageType" class="form-label">Type</label>
+                    <input type="text" class="form-control" id="packageType" required>
+                </div>
+                <div class="mb-3">
+                    <label for="packageDescription" class="form-label">Description</label>
+                    <textarea class="form-control" id="packageDescription" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-success">Save</button>
+                <button type="button" class="btn btn-secondary" onclick="closePackageModal()">Cancel</button>
+            </form>
+        </div>
+
+    <script>
+        // API URLs
+        const USER_API_URL = "http://localhost:9000/api/users";
+        const PHOTOGRAPHER_API_URL = "http://localhost:9000/api/photographers";
+        const EVENT_API_URL = "http://localhost:9000/api/bookings";
+        const TICKET_API_URL = "http://localhost:9000/api/tickets";
+        const PAYMENT_API_URL = "http://localhost:9000/api/payments";
+        const PACKAGE_API_URL = "http://localhost:9000/api/packages";
+
+
+        // Global variables for editing
+        let editingUserId = null;
+        let editingPhotographerId = null;
+        let editingEventId = null;
+        let editingTicketId = null;
+        let editingPaymentId = null;
+        let editingPackageId = null;
+
+        // Utility functions
+        function showAlert(message, type = 'success') {
+            const alertElement = document.getElementById(type === 'success' ? 'alertSuccess' : 'alertError');
+            alertElement.textContent = message;
+            alertElement.style.display = 'block';
+            setTimeout(() => {
+                alertElement.style.display = 'none';
+            }, 3000);
+        }
+
+        function hideAlerts() {
+            document.getElementById('alertSuccess').style.display = 'none';
+            document.getElementById('alertError').style.display = 'none';
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function formatCardNumber(cardNumber) {
+            const str = cardNumber.toString();
+            return str.substring(0, 4) + ' **** **** ' + str.substring(str.length - 4);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString();
+        }
+
+        // ---------------- Navigation ----------------
+        document.addEventListener("DOMContentLoaded", function() {
+            const navLinks = document.querySelectorAll('.nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    hideAlerts();
+                    
+                    // Update active nav
+                    navLinks.forEach(l => l.classList.remove('active'));
+                    document.querySelectorAll('.content-section').forEach(sec => sec.classList.remove('active'));
+                    
+                    this.classList.add('active');
+                    document.getElementById(this.dataset.target).classList.add('active');
+                    
+                    // Load data for active section
+                    switch(this.dataset.target) {
+                        case 'usersSection':
+                            loadUsers();
+                            break;
+                        case 'photographersSection':
+                            loadPhotographers();
+                            break;
+                        case 'eventSection':
+                            loadEvents();
+                            break;
+                        case 'ticketsSection':
+                            loadTickets();
+                            break;
+                        case 'paymentSection':
+                            loadPayments();
+                            break;
+                        case 'promotionSection':
+                            loadPackages();
+                            break;    
+                    }
+                });
+            });
+
+            // Load initial data
+            loadUsers();
+            loadPhotographers();
+            loadEvents();
+            loadTickets();
+            loadPayments();
+            loadPackages();
+        });
+
+        // ---------------- Users CRUD ----------------
+        async function loadUsers() {
+            try {
+                const response = await fetch(USER_API_URL);
+                if (!response.ok) throw new Error('Failed to load users');
+                
+                const users = await response.json();
+                const tbody = document.getElementById("usersTableBody");
+                tbody.innerHTML = "";
+                
+                users.forEach(user => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${user.uid}</td>
+                            <td>${escapeHtml(user.uname)}</td>
+                            <td>${escapeHtml(user.uemail)}</td>
+                            <td>${escapeHtml(user.uphone)}</td>
+                            <td>••••••••</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="editUser(${user.uid},'${escapeHtml(user.uname)}','${escapeHtml(user.uemail)}','${escapeHtml(user.uphone)}','${escapeHtml(user.upassword)}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteUser(${user.uid})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading users:', error);
+                showAlert('Failed to load users: ' + error.message, 'error');
+            }
+        }
+
+        function openUserModal() {
+            document.getElementById("userModal").style.display = "block";
+            document.getElementById("modalTitle").textContent = "Add User";
+            document.getElementById("userForm").reset();
+            editingUserId = null;
+        }
+
+        function closeUserModal() {
+            document.getElementById("userModal").style.display = "none";
+        }
+
+        function editUser(uid, uname, uemail, uphone, upassword) {
+            openUserModal();
+            document.getElementById("modalTitle").textContent = "Edit User";
+            document.getElementById("uid").value = uid;
+            document.getElementById("uname").value = uname;
+            document.getElementById("uemail").value = uemail;
+            document.getElementById("uphone").value = uphone;
+            document.getElementById("upassword").value = upassword;
+            editingUserId = uid;
+        }
+
+        document.getElementById("userForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            
+            const data = {
+                uname: document.getElementById("uname").value,
+                uemail: document.getElementById("uemail").value,
+                uphone: document.getElementById("uphone").value,
+                upassword: document.getElementById("upassword").value
+            };
+
+            try {
+                let response;
+                if (editingUserId) {
+                    response = await fetch(`${USER_API_URL}/${editingUserId}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(USER_API_URL, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (!response.ok) throw new Error('Failed to save user');
+                
+                closeUserModal();
+                loadUsers();
+                showAlert(editingUserId ? 'User updated successfully!' : 'User created successfully!');
+            } catch (error) {
+                console.error('Error saving user:', error);
+                showAlert('Failed to save user: ' + error.message, 'error');
+            }
+        });
+
+        async function deleteUser(uid) {
+            if (!confirm("Are you sure you want to delete this user?")) return;
+            
+            try {
+                const response = await fetch(`${USER_API_URL}/${uid}`, {method: "DELETE"});
+                if (!response.ok) throw new Error('Failed to delete user');
+                
+                loadUsers();
+                showAlert('User deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting user:', error);
+                showAlert('Failed to delete user: ' + error.message, 'error');
+            }
+        }
+
+        // ---------------- Photographers CRUD ----------------
+        async function loadPhotographers() {
+            try {
+                const response = await fetch(PHOTOGRAPHER_API_URL);
+                if (!response.ok) throw new Error('Failed to load photographers');
+                
+                const photographers = await response.json();
+                const tbody = document.getElementById("photographersTableBody");
+                tbody.innerHTML = "";
+                
+                photographers.forEach(photographer => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${photographer.pid}</td>
+                            <td>${escapeHtml(photographer.firstName)}</td>
+                            <td>${escapeHtml(photographer.lastName)}</td>
+                            <td>${escapeHtml(photographer.nic)}</td>
+                            <td>${escapeHtml(photographer.email)}</td>
+                            <td>${escapeHtml(photographer.phone)}</td>
+                            <td>${escapeHtml(photographer.jobTitle)}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="editPhotographer(${photographer.pid},'${escapeHtml(photographer.firstName)}','${escapeHtml(photographer.lastName)}','${escapeHtml(photographer.nic)}','${escapeHtml(photographer.email)}','${escapeHtml(photographer.phone)}','${escapeHtml(photographer.jobTitle)}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deletePhotographer(${photographer.pid})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading photographers:', error);
+                showAlert('Failed to load photographers: ' + error.message, 'error');
+            }
+        }
+
+        function openPhotographerModal() {
+            document.getElementById("photographerModal").style.display = "block";
+            document.getElementById("photographerModalTitle").textContent = "Add Photographer";
+            document.getElementById("photographerForm").reset();
+            editingPhotographerId = null;
+        }
+
+        function closePhotographerModal() {
+            document.getElementById("photographerModal").style.display = "none";
+        }
+
+        function editPhotographer(id, firstName, lastName, nic, email, phone, jobTitle) {
+            openPhotographerModal();
+            document.getElementById("photographerModalTitle").textContent = "Edit Photographer";
+            document.getElementById("pid").value = id;
+            document.getElementById("pfirstName").value = firstName;
+            document.getElementById("plastName").value = lastName;
+            document.getElementById("pnic").value = nic;
+            document.getElementById("pemail").value = email;
+            document.getElementById("pphone").value = phone;
+            document.getElementById("pjobTitle").value = jobTitle;
+            editingPhotographerId = id;
+        }
+
+        document.getElementById("photographerForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            
+            const data = {
+                firstName: document.getElementById("pfirstName").value,
+                lastName: document.getElementById("plastName").value,
+                nic: document.getElementById("pnic").value,
+                email: document.getElementById("pemail").value,
+                phone: document.getElementById("pphone").value,
+                jobTitle: document.getElementById("pjobTitle").value
+            };
+
+            try {
+                let response;
+                if (editingPhotographerId) {
+                    response = await fetch(`${PHOTOGRAPHER_API_URL}/${editingPhotographerId}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(PHOTOGRAPHER_API_URL, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (!response.ok) throw new Error('Failed to save photographer');
+                
+                closePhotographerModal();
+                loadPhotographers();
+                showAlert(editingPhotographerId ? 'Photographer updated successfully!' : 'Photographer created successfully!');
+            } catch (error) {
+                console.error('Error saving photographer:', error);
+                showAlert('Failed to save photographer: ' + error.message, 'error');
+            }
+        });
+
+        async function deletePhotographer(id) {
+            if (!confirm("Are you sure you want to delete this photographer?")) return;
+            
+            try {
+                const response = await fetch(`${PHOTOGRAPHER_API_URL}/${id}`, {method: "DELETE"});
+                if (!response.ok) throw new Error('Failed to delete photographer');
+                
+                loadPhotographers();
+                showAlert('Photographer deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting photographer:', error);
+                showAlert('Failed to delete photographer: ' + error.message, 'error');
+            }
+        }
+
+        // ---------------- Events CRUD ----------------
+        async function loadEvents() {
+            try {
+                const response = await fetch(EVENT_API_URL);
+                if (!response.ok) throw new Error('Failed to load events');
+                
+                const events = await response.json();
+                const tbody = document.getElementById("eventsTableBody");
+                tbody.innerHTML = "";
+                
+                events.forEach(event => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${event.id}</td>
+                            <td>${escapeHtml(event.name)}</td>
+                            <td>${escapeHtml(event.email)}</td>
+                            <td>${escapeHtml(event.phone)}</td>
+                            <td>${escapeHtml(event.eventType)}</td>
+                            <td>${event.date}</td>
+                            <td>${event.time}</td>
+                            <td>${escapeHtml(event.location)}</td>
+                            <td>${escapeHtml(event.photographer)}</td>
+                            <td>${escapeHtml(event.packageType)}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="editEvent(${event.id},'${escapeHtml(event.name)}','${escapeHtml(event.email)}','${escapeHtml(event.phone)}','${escapeHtml(event.eventType)}','${event.date}','${event.time}','${escapeHtml(event.location)}','${escapeHtml(event.photographer)}','${escapeHtml(event.packageType)}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteEvent(${event.id})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading events:', error);
+                showAlert('Failed to load events: ' + error.message, 'error');
+            }
+        }
+
+        function openEventModal() {
+            document.getElementById("eventModal").style.display = "block";
+            document.getElementById("eventModalTitle").textContent = "Add Event";
+            document.getElementById("eventForm").reset();
+            editingEventId = null;
+        }
+
+        function closeEventModal() {
+            document.getElementById("eventModal").style.display = "none";
+        }
+
+        function editEvent(id, name, email, phone, type, date, time, location, photographer, packageType) {
+            openEventModal();
+            document.getElementById("eventModalTitle").textContent = "Edit Event";
+            document.getElementById("eventId").value = id;
+            document.getElementById("eventName").value = name;
+            document.getElementById("eventEmail").value = email;
+            document.getElementById("eventPhone").value = phone;
+            document.getElementById("eventType").value = type;
+            document.getElementById("eventDate").value = date;
+            document.getElementById("eventTime").value = time;
+            document.getElementById("eventLocation").value = location;
+            document.getElementById("eventPhotographer").value = photographer;
+            document.getElementById("eventPackage").value = packageType;
+            editingEventId = id;
+        }
+
+        document.getElementById("eventForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            
+            const data = {
+                name: document.getElementById("eventName").value,
+                email: document.getElementById("eventEmail").value,
+                phone: document.getElementById("eventPhone").value,
+                eventType: document.getElementById("eventType").value,
+                date: document.getElementById("eventDate").value,
+                time: document.getElementById("eventTime").value,
+                location: document.getElementById("eventLocation").value,
+                photographer: document.getElementById("eventPhotographer").value,
+                packageType: document.getElementById("eventPackage").value
+            };
+
+            try {
+                let response;
+                if (editingEventId) {
+                    response = await fetch(`${EVENT_API_URL}/${editingEventId}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(EVENT_API_URL, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (!response.ok) throw new Error('Failed to save event');
+                
+                closeEventModal();
+                loadEvents();
+                showAlert(editingEventId ? 'Event updated successfully!' : 'Event created successfully!');
+            } catch (error) {
+                console.error('Error saving event:', error);
+                showAlert('Failed to save event: ' + error.message, 'error');
+            }
+        });
+
+        async function deleteEvent(id) {
+            if (!confirm("Are you sure you want to delete this event?")) return;
+            
+            try {
+                const response = await fetch(`${EVENT_API_URL}/${id}`, {method: "DELETE"});
+                if (!response.ok) throw new Error('Failed to delete event');
+                
+                loadEvents();
+                showAlert('Event deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting event:', error);
+                showAlert('Failed to delete event: ' + error.message, 'error');
+            }
+        }
+
+        // ---------------- Tickets CRUD ----------------
+        async function loadTickets() {
+            try {
+                const response = await fetch(TICKET_API_URL);
+                if (!response.ok) throw new Error('Failed to load tickets');
+                
+                const tickets = await response.json();
+                const tbody = document.getElementById("ticketsTableBody");
+                tbody.innerHTML = "";
+                
+                tickets.forEach(ticket => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${ticket.tid || ticket.Tid}</td>
+                            <td>${escapeHtml(ticket.tname)}</td>
+                            <td>${escapeHtml(ticket.temail)}</td>
+                            <td>${escapeHtml(ticket.tphone)}</td>
+                            <td>${escapeHtml(ticket.tsubject)}</td>
+                            <td title="${escapeHtml(ticket.tmessage)}">${escapeHtml(ticket.tmessage.substring(0, 50))}${ticket.tmessage.length > 50 ? '...' : ''}</td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="editTicket(${ticket.tid || ticket.Tid},'${escapeHtml(ticket.tname)}','${escapeHtml(ticket.temail)}','${escapeHtml(ticket.tphone)}','${escapeHtml(ticket.tsubject)}','${escapeHtml(ticket.tmessage)}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deleteTicket(${ticket.tid || ticket.Tid})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading tickets:', error);
+                showAlert('Failed to load tickets: ' + error.message, 'error');
+            }
+        }
+
+        function openTicketModal() {
+            document.getElementById("ticketModal").style.display = "block";
+            document.getElementById("ticketModalTitle").textContent = "Add Ticket";
+            document.getElementById("ticketForm").reset();
+            editingTicketId = null;
+        }
+
+        function closeTicketModal() {
+            document.getElementById("ticketModal").style.display = "none";
+        }
+
+        function editTicket(id, name, email, phone, subject, message) {
+            openTicketModal();
+            document.getElementById("ticketModalTitle").textContent = "Edit Ticket";
+            document.getElementById("ticketId").value = id;
+            document.getElementById("ticketName").value = name;
+            document.getElementById("ticketEmail").value = email;
+            document.getElementById("ticketPhone").value = phone;
+            document.getElementById("ticketSubject").value = subject;
+            document.getElementById("ticketMessage").value = message;
+            editingTicketId = id;
+        }
+
+        document.getElementById("ticketForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            
+            const data = {
+                tname: document.getElementById("ticketName").value,
+                temail: document.getElementById("ticketEmail").value,
+                tphone: document.getElementById("ticketPhone").value,
+                tsubject: document.getElementById("ticketSubject").value,
+                tmessage: document.getElementById("ticketMessage").value
+            };
+
+            try {
+                let response;
+                if (editingTicketId) {
+                    response = await fetch(`${TICKET_API_URL}/${editingTicketId}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(TICKET_API_URL, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                closeTicketModal();
+                loadTickets();
+                showAlert(editingTicketId ? 'Ticket updated successfully!' : 'Ticket created successfully!');
+            } catch (error) {
+                console.error('Error saving ticket:', error);
+                showAlert('Failed to save ticket: ' + error.message, 'error');
+            }
+        });
+
+        async function deleteTicket(id) {
+            if (!confirm("Are you sure you want to delete this ticket?")) return;
+            
+            try {
+                const response = await fetch(`${TICKET_API_URL}/${id}`, {method: "DELETE"});
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                loadTickets();
+                showAlert('Ticket deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting ticket:', error);
+                showAlert('Failed to delete ticket: ' + error.message, 'error');
+            }
+        }
+
+        // ---------------- Payments CRUD ----------------
+        async function loadPayments() {
+            try {
+                const response = await fetch(PAYMENT_API_URL);
+                if (!response.ok) throw new Error('Failed to load payments');
+                
+                const payments = await response.json();
+                const tbody = document.getElementById("paymentsTableBody");
+                tbody.innerHTML = "";
+                
+                payments.forEach(payment => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${payment.payemntid}</td>
+                            <td>${escapeHtml(payment.name)}</td>
+                            <td>${escapeHtml(payment.email)}</td>
+                            <td>${formatCardNumber(payment.cardNumber)}</td>
+                            <td>${formatDate(payment.expiryDate)}</td>
+                            <td><span class="badge bg-primary">${escapeHtml(payment.method)}</span></td>
+                            <td>${escapeHtml(payment.price || 'N/A')}</td>
+                            <td><span class="badge bg-secondary">${escapeHtml(payment.type || 'N/A')}</span></td>
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="editPayment(${payment.payemntid},'${escapeHtml(payment.name)}','${escapeHtml(payment.email)}','${payment.cardNumber}','${payment.expiryDate}',${payment.cvv},'${escapeHtml(payment.method)}','${escapeHtml(payment.price || '')}','${escapeHtml(payment.type || '')}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deletePayment(${payment.payemntid})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading payments:', error);
+                showAlert('Failed to load payments: ' + error.message, 'error');
+            }
+        }
+
+        function openPaymentModal() {
+            document.getElementById("paymentModal").style.display = "block";
+            document.getElementById("paymentModalTitle").textContent = "Add Payment Record";
+            document.getElementById("paymentForm").reset();
+            editingPaymentId = null;
+        }
+
+        function closePaymentModal() {
+            document.getElementById("paymentModal").style.display = "none";
+        }
+
+        function editPayment(id, name, email, cardNumber, expiryDate, cvv, method, price, type) {
+            openPaymentModal();
+            document.getElementById("paymentModalTitle").textContent = "Edit Payment Record";
+            document.getElementById("paymentId").value = id;
+            document.getElementById("paymentName").value = name;
+            document.getElementById("paymentEmail").value = email;
+            document.getElementById("paymentCardNumber").value = cardNumber;
+            document.getElementById("paymentExpiryDate").value = expiryDate;
+            document.getElementById("paymentCvv").value = cvv;
+            document.getElementById("paymentMethod").value = method;
+            document.getElementById("paymentPrice").value = price;
+            document.getElementById("paymentType").value = type;
+            editingPaymentId = id;
+        }
+
+        document.getElementById("paymentForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            
+            const data = {
+                name: document.getElementById("paymentName").value,
+                email: document.getElementById("paymentEmail").value,
+                cardNumber: document.getElementById("paymentCardNumber").value,
+                expiryDate: document.getElementById("paymentExpiryDate").value,
+                cvv: parseInt(document.getElementById("paymentCvv").value),
+                method: document.getElementById("paymentMethod").value,
+                price: document.getElementById("paymentPrice").value,
+                type: document.getElementById("paymentType").value
+            };
+
+            try {
+                let response;
+                if (editingPaymentId) {
+                    response = await fetch(`${PAYMENT_API_URL}/${editingPaymentId}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(PAYMENT_API_URL, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                closePaymentModal();
+                loadPayments();
+                showAlert(editingPaymentId ? 'Payment record updated successfully!' : 'Payment record created successfully!');
+            } catch (error) {
+                console.error('Error saving payment:', error);
+                showAlert('Failed to save payment: ' + error.message, 'error');
+            }
+        });
+
+        async function deletePayment(id) {
+            if (!confirm("Are you sure you want to delete this payment record?")) return;
+            
+            try {
+                const response = await fetch(`${PAYMENT_API_URL}/${id}`, {method: "DELETE"});
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                loadPayments();
+                showAlert('Payment record deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting payment:', error);
+                showAlert('Failed to delete payment: ' + error.message, 'error');
+            }
+        }
+
+                       // ---------------- Packages CRUD ----------------
+        async function loadPackages() {
+            try {
+                const response = await fetch(PACKAGE_API_URL);
+                if (!response.ok) throw new Error('Failed to load packages');
+                
+                const packages = await response.json();
+                const tbody = document.getElementById("packageTableBody");
+                tbody.innerHTML = "";
+                
+                packages.forEach(pkg => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${pkg.packageId}</td>
+                            <td>${escapeHtml(pkg.name)}</td>
+                            <td>${escapeHtml(pkg.price)}</td>
+                            <td>${escapeHtml(pkg.hours)}</td>
+                            <td>${escapeHtml(pkg.type)}</td>
+                            <td title="${escapeHtml(pkg.description)}">${escapeHtml(pkg.description.substring(0, 50))}${pkg.description.length > 50 ? '...' : ''}</td>
+                            
+                            <td>
+                                <button class="btn btn-primary btn-sm" onclick="editPackage(${pkg.packageId},'${escapeHtml(pkg.name)}','${escapeHtml(pkg.price)}','${escapeHtml(pkg.hours)}','${escapeHtml(pkg.type)}','${escapeHtml(pkg.description)}')">Edit</button>
+                                <button class="btn btn-danger btn-sm" onclick="deletePackage(${pkg.packageId})">Delete</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (error) {
+                console.error('Error loading packages:', error);
+                showAlert('Failed to load packages: ' + error.message, 'error');
+            }
+        }
+
+        function openPackageModal() {
+            document.getElementById("packageModal").style.display = "block";
+            document.getElementById("packageModalTitle").textContent = "Add Payment Record";
+            document.getElementById("packageForm").reset();
+            editingPackageId = null;
+        }
+
+        function closePackageModal() {
+            document.getElementById("packageModal").style.display = "none";
+        }
+
+        function editPackage(id, name, price, hours, type, description) {
+            openPackageModal();
+            document.getElementById("packageModalTitle").textContent = "Edit Packages";
+            document.getElementById("packageId").value = id;
+            document.getElementById("packageName").value = name;
+            document.getElementById("packagePrice").value = price;
+            document.getElementById("packageHours").value = hours;  
+            document.getElementById("packageType").value = type;
+            document.getElementById("packageDescription").value = description;
+            
+            editingPackageId = id;
+        }
+
+        document.getElementById("packageForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            hideAlerts();
+            
+            const data = {
+                name: document.getElementById("packageName").value,
+                price: document.getElementById("packagePrice").value,
+                hours: document.getElementById("packageHours").value,
+                type: document.getElementById("packageType").value,
+                description: document.getElementById("packageDescription").value
+            };
+
+            try {
+                let response;
+                if (editingPackageId) {
+                    response = await fetch(`${PACKAGE_API_URL}/${editingPackageId}`, {
+                        method: "PUT",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                } else {
+                    response = await fetch(PACKAGE_API_URL, {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify(data)
+                    });
+                }
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                closePackageModal();
+                loadPackages();
+                showAlert(editingPackageId ? 'Packages updated successfully!' : 'Packages created successfully!');
+            } catch (error) {
+                console.error('Error saving package:', error);
+                showAlert('Failed to save package: ' + error.message, 'error');
+            }
+        });
+
+        async function deletePackage(id) {
+            if (!confirm("Are you sure you want to delete this package?")) return;
+            
+            try {
+                const response = await fetch(`${PACKAGE_API_URL}/${id}`, {method: "DELETE"});
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(`HTTP ${response.status}: ${errorText}`);
+                }
+                
+                loadPackages();
+                showAlert('Package record deleted successfully!');
+            } catch (error) {
+                console.error('Error deleting package:', error);
+                showAlert('Failed to delete package: ' + error.message, 'error');
+            }
+        }
+
+
+
+        // ---------------- Modal Event Listeners ----------------
+        // Close modals when clicking outside
+        window.onclick = function(event) {
+            const modals = ['userModal', 'photographerModal', 'eventModal', 'ticketModal', 'paymentModal', 'packageModal'];
+            modals.forEach(modalId => {
+                const modal = document.getElementById(modalId);
+                if (event.target === modal) {
+                    modal.style.display = 'none';
+                }
+            });
+        }
+
+        // Close modals with Escape key
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const modals = ['userModal', 'photographerModal', 'eventModal', 'ticketModal', 'paymentModal', 'packageModal'];
+                modals.forEach(modalId => {
+                    document.getElementById(modalId).style.display = 'none';
+                });
+            }
+        });
+
+        // ---------------- Logout ----------------
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                window.location.href = "login.html";
+            }
+        }
+
+        // ---------------- Network Error Handler ----------------
+        window.addEventListener('online', function() {
+            showAlert('Connection restored!', 'success');
+        });
+
+        window.addEventListener('offline', function() {
+            showAlert('You are offline. Some features may not work.', 'error');
+        });
+    </script>
+</body>
+</html>

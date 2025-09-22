@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register</title>
+  <!-- <link rel="stylesheet" href="css/register-styles.css"> -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    body{
+      font-family: 'poppins', sans-serif !important;
+    }
+    .is-invalid { border-color: #dc3545 !important; }
+    .is-valid { border-color: #28a745 !important; }
+    
+    .register-container {
+      min-height: 100vh;
+    }
+    
+    .form-section {
+      background: #120f36;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 40px 20px;
+      min-height: 100vh;
+    }
+    
+    .image-section {
+      background: #f8f9fa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      min-height: 100vh;
+      border-left: 1px solid #e9ecef;
+    }
+    
+    .image-section img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    
+    .image-placeholder {
+      color: #6c757d;
+      text-align: center;
+      font-size: 1.2rem;
+      opacity: 0.7;
+    }
+    
+    .login-container {
+      width: 100%;
+      max-width: 400px;
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+    }
+    
+    @media (max-width: 768px) {
+      .image-section {
+        min-height: 200px;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="container-fluid register-container">
+  <div class="row h-100">
+    <!-- Left side - Registration Form -->
+    <div class="col-lg-6 form-section">
+      <div class="login-container p-4">
+        <h2 class="text-center mb-4">Register</h2>
+
+        <div id="alertContainer"></div>
+
+        <form id="registrationForm" novalidate>
+          <div class="mb-3">
+            <label for="uemail" class="form-label">Email address</label>
+            <input type="email" class="form-control" id="uemail" name="uemail" required>
+            <div class="invalid-feedback">Please enter a valid email address.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="uname" class="form-label">Username</label>
+            <input type="text" class="form-control" id="uname" name="uname" required minlength="3">
+            <div class="invalid-feedback">Username must be at least 3 characters long.</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="uphone" class="form-label">Phone Number</label>
+            <input type="tel" class="form-control" id="uphone" name="uphone" required pattern="^\d{10,15}$">
+            <div class="invalid-feedback">Enter a valid phone number (10-15 digits).</div>
+          </div>
+
+          <div class="mb-3">
+            <label for="upassword" class="form-label">Password</label>
+            <input type="password" class="form-control" id="upassword" name="upassword" required minlength="6">
+            <div class="invalid-feedback">Password must be at least 6 characters.</div>
+          </div>
+
+          <div class="d-flex justify-content-between">
+            <button type="submit" class="btn btn-primary">
+              <span class="loading spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
+              Register
+            </button>
+            <button type="button" class="btn btn-secondary" onclick="cancelRegistration()">Cancel</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Right side - Image -->
+    <div class="col-lg-6 image-section">
+      
+      <img src="images/register-cover-img.jpeg" alt="Registration Image" class="d-none" id="bgImage">
+      
+    
+      <div class="image-placeholder" id="imagePlaceholder">
+        <div>
+          <i class="fas fa-user-plus fa-4x mb-4"></i>
+          <h3 class="mb-3">Join Our Community</h3>
+          <p class="mb-0">Create your account to get started</p>
+        </div>
+      </div>
+    </div>
+  
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const API_BASE_URL = 'http://localhost:9000/api/users';
+
+  const registrationForm = document.getElementById('registrationForm');
+
+  // Handle image loading
+  const bgImage = document.getElementById('bgImage');
+  const imagePlaceholder = document.getElementById('imagePlaceholder');
+  
+  bgImage.onload = function() {
+    bgImage.classList.remove('d-none');
+    imagePlaceholder.style.display = 'none';
+  };
+  
+  bgImage.onerror = function() {
+    // If image fails to load, keep the placeholder
+    imagePlaceholder.style.display = 'block';
+  };
+
+  registrationForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    clearAlerts();
+
+    if (!validateForm()) return;
+
+    const submitButton = e.target.querySelector('button[type="submit"]');
+    const loadingSpinner = submitButton.querySelector('.loading');
+
+    submitButton.disabled = true;
+    loadingSpinner.classList.remove('d-none');
+
+    try {
+      const formData = new FormData(e.target);
+      const userData = {
+        uemail: formData.get('uemail'),
+        uname: formData.get('uname'),
+        uphone: formData.get('uphone'),
+        upassword: formData.get('upassword')
+      };
+
+      const response = await fetch(API_BASE_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(userData)
+      });
+
+      if (response.ok) {
+        showAlert('success', 'User registered successfully! Redirecting to login...');
+        setTimeout(() => window.location.href = 'login.html', 2000);
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        const errorMessage = errorData.message || `Registration failed: ${response.status} ${response.statusText}`;
+        showAlert('danger', errorMessage);
+      }
+    } catch (error) {
+      console.error('Registration error:', error);
+      showAlert('danger', 'Network error. Please try again.');
+    } finally {
+      submitButton.disabled = false;
+      loadingSpinner.classList.add('d-none');
+    }
+  });
+
+  function validateForm() {
+    let isValid = true;
+
+    const email = document.getElementById('uemail');
+    const username = document.getElementById('uname');
+    const phone = document.getElementById('uphone');
+    const password = document.getElementById('upassword');
+
+    // Email validation
+    const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailPattern.test(email.value.trim())) {
+      email.classList.add('is-invalid'); isValid = false;
+    } else email.classList.remove('is-invalid');
+
+    // Username validation
+    if (username.value.trim().length < 3) {
+      username.classList.add('is-invalid'); isValid = false;
+    } else username.classList.remove('is-invalid');
+
+    // Phone validation (10-15 digits)
+    const phonePattern = /^\d{10,15}$/;
+    if (!phonePattern.test(phone.value.trim())) {
+      phone.classList.add('is-invalid'); isValid = false;
+    } else phone.classList.remove('is-invalid');
+
+    // Password validation
+    if (password.value.trim().length < 6) {
+      password.classList.add('is-invalid'); isValid = false;
+    } else password.classList.remove('is-invalid');
+
+    return isValid;
+  }
+
+  function showAlert(type, message) {
+    const alertContainer = document.getElementById('alertContainer');
+    const alert = document.createElement('div');
+    alert.className = `alert alert-${type} alert-dismissible fade show`;
+    alert.innerHTML = `
+      ${message}
+      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    `;
+    alertContainer.appendChild(alert);
+  }
+
+  function clearAlerts() {
+    document.getElementById('alertContainer').innerHTML = '';
+  }
+
+  function cancelRegistration() {
+    if (confirm('Cancel registration?')) {
+      registrationForm.reset();
+      clearAlerts();
+      document.querySelectorAll('.form-control').forEach(input => input.classList.remove('is-invalid'));
+    }
+  }
+</script>
+</body>
+</html>
