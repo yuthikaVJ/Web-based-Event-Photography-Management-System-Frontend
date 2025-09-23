@@ -288,6 +288,7 @@
         body: JSON.stringify(eventData)
       });
       if (res.ok) {
+        localStorage.setItem("lastEvent", JSON.stringify(eventData));
         alert("Event created successfully!");
         window.location.href = "payment.html"; // redirect to payment
       } else {
