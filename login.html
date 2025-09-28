@@ -234,7 +234,7 @@
 
       // ✅ Photographer Login
       try {
-        const resPhotographer = await fetch("http://localhost:9000/api/photographers");
+        const resPhotographer = await fetch("http://16.16.146.15:9000/api/photographers");
         if (resPhotographer.ok) {
           const photographers = await resPhotographer.json();
           const match = photographers.find(p => p.email === email && p.nic === password);
@@ -251,7 +251,7 @@
 
       // ✅ Customer Login
       try {
-        const response = await fetch("http://localhost:9000/api/users/login", {
+        const response = await fetch("http://16.16.146.15:9000/api/users/login", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ uemail: email, upassword: password })

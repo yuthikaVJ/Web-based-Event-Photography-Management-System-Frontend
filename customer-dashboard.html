@@ -190,12 +190,12 @@
 </div>
 
 <script>
-  const TICKET_API_URL = "http://localhost:9000/api/tickets";
-  const EVENT_API_URL = "http://localhost:9000/api/bookings";
-  const PHOTOGRAPHER_API_URL = "http://localhost:9000/api/photographers";
-  const PACKAGE_API_URL = "http://localhost:9000/api/packages";
-  const GALLERY_API_URL = "http://localhost:9000/zip";
-  const PROFILE_API_URL = "http://localhost:9000/api/customers"; // <-- profile API
+  const TICKET_API_URL = "http://16.16.146.15:9000/api/tickets";
+  const EVENT_API_URL = "http://16.16.146.15:9000/api/bookings";
+  const PHOTOGRAPHER_API_URL = "http://16.16.146.15:9000/api/photographers";
+  const PACKAGE_API_URL = "http://16.16.146.15:9000/api/packages";
+  const GALLERY_API_URL = "http://16.16.146.15:9000/zip";
+  const PROFILE_API_URL = "http://16.16.146.15:9000/api/customers"; // <-- profile API
 
   const loggedInUser = JSON.parse(localStorage.getItem("loggedInUser"));
   if (!loggedInUser) window.location.href = "login.html";
